@@ -196,7 +196,9 @@ export class FamilyHeaderComponent implements OnInit, OnDestroy {
         }
 
         this.home = res.data;
-        this.streetFamilyData.emit({income: this.home.income, region: this.home.country.region});
+        //RJA: I added the country to the input of the street component, this is an object that has a region
+        // but kept the region for compatibility.
+        this.streetFamilyData.emit({income: this.home.income, country: this.home.country, region: this.home.country.region});
         this.mapData = this.home.country;
 
         if (!this.home.translated && this.languageService.currentLanguage !== this.languageService.defaultLanguage) {

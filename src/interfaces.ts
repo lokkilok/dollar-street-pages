@@ -102,7 +102,7 @@ export interface DrawDividersInterface {
 
 export interface Place {
   background: string;
-  country: string;
+  country: any;
   image: string;
   income: number;
   incomeQuality: number;

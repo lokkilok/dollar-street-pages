@@ -50,7 +50,7 @@ export class FamilyComponent implements OnInit, OnDestroy, AfterViewInit {
   public theWorldTranslate: string;
   public window: Window = window;
   public document: Document = document;
-  public streetFamilyData: {income: number; region: string};
+  public streetFamilyData: {income: number; country: string, region: string};
   public zoom: number;
   public openFamilyExpandBlock: Subject<any> = new Subject<any>();
   public placeId: string;

@@ -15,7 +15,8 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
-  AfterViewInit
+  AfterViewInit,
+  ViewEncapsulation
 } from '@angular/core';
 import { GetStreetSettings } from '../../common/street-settings/ngrx/street-settings.actions';
 import { StreetFamilyDrawService } from './street-family.service';
@@ -24,7 +25,8 @@ import { DEBOUNCE_TIME } from '../../defaultState';
 @Component({
   selector: 'street-family',
   templateUrl: './street-family.component.html',
-  styleUrls: ['./street-family.component.css']
+  styleUrls: ['./street-family.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class StreetFamilyComponent implements OnDestroy, AfterViewInit {
   @ViewChild('svg')
@@ -106,6 +108,7 @@ export class StreetFamilyComponent implements OnDestroy, AfterViewInit {
       .clearSvg()
       .init(drawDividers)
       .drawRoad(drawDividers)
-      .drawHouse(place);
+      .drawHouse(place)
+      .drawIncomeMountain(place);
   }
 }
