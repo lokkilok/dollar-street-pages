@@ -9,15 +9,20 @@ import { get } from 'lodash';
 import { DefaultUrlParameters } from '../../defaultState';
 import { WsReader } from 'vizabi-ws-reader';
 
+interface Point {x: number, y:number};
+
 @Injectable()
 export class StreetFamilyDrawService {
   public width: number;
   public height: number;
   public roadGroundLevel: number;
   public streetOffset = 60;
+  private sidewalkLeft: Point; //the low-income end of the sidewalk 
+  private sidewalkRight: Point; //the high-income end of the sidewalk
   public chosenPlaces: Place[];
-  public scale: any;
-  private yScale: any;
+  public scale: any; // for placing the dividers and house in the front
+  private xScale: any; // for the income mountain on the sidewalk
+  private yScale: any; // for the income mountain
   public axisLabel: number[] = [];
   public svg: any;
   private area: any;
@@ -42,6 +47,8 @@ export class StreetFamilyDrawService {
     this.height = parseInt(this.svg.style('height'), 10);
     this.roadGroundLevel = this.height - 0.5 * 65; // the road element used to be 65px high;
     this.windowInnerWidth = window.innerWidth;
+    this.sidewalkLeft = {x: 30, y: this.roadGroundLevel - 4};
+    this.sidewalkRight = {x: this.width + this.streetOffset - this.streetOffset / 2, y: this.roadGroundLevel - 4};
 
     this.scale = scaleLog()
       .domain([
@@ -52,10 +59,16 @@ export class StreetFamilyDrawService {
 
     // define mountain (area) D3 generator
     const _this = this;
+    this.xScale = scaleLog()
+      .domain([
+        get(drawDividers, 'poor', Number(DefaultUrlParameters.lowIncome)),
+        get(drawDividers, 'rich', Number(DefaultUrlParameters.highIncome))
+      ])
+      .range([this.sidewalkLeft.x, this.sidewalkRight.x - this.sidewalkLeft.x]);
     this.yScale = scaleLinear().domain([0, 1]).range([this.roadGroundLevel - 4, 0]);
     this.area = area <number> ()
       .curve(curveBasis)
-      .x(income => _this.scale(income))
+      .x(income => _this.xScale(income))
       .y0(income => _this.yScale(0))
       .y1(income => _this.yScale(_this.lognormal(income, _this.sigma, _this.mu)));
 
@@ -157,8 +170,8 @@ export class StreetFamilyDrawService {
       .attr('height', SVG_DEFAULTS.road.height)
       .attr('points', () => {
         const point1 = `0,${ this.roadGroundLevel + 11}`;
-        const point2 = `30,${ this.roadGroundLevel - 4}`;
-        const point3 = `${ this.width + this.streetOffset - this.streetOffset / 2},${ this.roadGroundLevel - 4}`;
+        const point2 = `${ this.sidewalkLeft.x },${ this.sidewalkLeft.y }`;
+        const point3 = `${ this.sidewalkRight.x },${ this.sidewalkRight.y }`;
         const point4 = `${ this.width + this.streetOffset},${ this.roadGroundLevel + 11}`;
 
         return `${point1} ${point2} ${point3} ${point4}`;
