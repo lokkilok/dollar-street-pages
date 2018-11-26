@@ -186,16 +186,17 @@ export class StreetFamilyDrawService {
       .attr('stroke-width', 2)
       .attr('stroke', 'white');
 
-    this.svg
-      .append('line')
-      .attr('class', 'dash')
-      .attr('x1', 24)
-      .attr('y1', this.roadGroundLevel - 12 )
-      .attr('x2', this.width + this.streetOffset - 24)
-      .attr('y2', this.roadGroundLevel - 11)
-      .attr('stroke-dasharray', '17')
-      .attr('stroke-width', 1)
-      .attr('stroke', 'white');
+// RJA: this second dashed line seems to be unnecessary
+//    this.svg
+//      .append('line')
+//      .attr('class', 'dash')
+//      .attr('x1', 24)
+//      .attr('y1', this.roadGroundLevel - 12 )
+//      .attr('x2', this.width + this.streetOffset - 24)
+//      .attr('y2', this.roadGroundLevel - 11)
+//      .attr('stroke-dasharray', '17')
+//      .attr('stroke-width', 1)
+//      .attr('stroke', 'white');
 
     this.isDrawDividers(drawDividers);
 
