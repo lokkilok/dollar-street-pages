@@ -7,6 +7,7 @@ import { SVG_DEFAULTS } from '../street/svg-parameters';
 import { Place } from '../../interfaces';
 import { get } from 'lodash';
 import { DefaultUrlParameters } from '../../defaultState';
+import { WsReader } from 'vizabi-ws-reader';
 
 @Injectable()
 export class StreetFamilyDrawService {
@@ -52,14 +53,14 @@ export class StreetFamilyDrawService {
     // define mountain (area) D3 generator
     const _this = this;
     this.yScale = scaleLinear().domain([0, 1]).range([this.roadGroundLevel - 4, 0]);
-    this.area = area()
+    this.area = area <number> ()
       .curve(curveBasis)
       .x(income => _this.scale(income))
       .y0(income => _this.yScale(0))
       .y1(income => _this.yScale(_this.lognormal(income, _this.sigma, _this.mu)));
 
     //Prepare the waffle service reader
-    this.wsReader = WsReader.WsReader.getReader();
+    this.wsReader = WsReader.getReader();
     this.wsReader.init({
         "reader": "waffle",
         "path": "https://waffle-server.gapminder.org/api/ddf/ql"
