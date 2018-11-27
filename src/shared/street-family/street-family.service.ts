@@ -8,6 +8,7 @@ import { Place } from '../../interfaces';
 import { get } from 'lodash';
 import { DefaultUrlParameters } from '../../defaultState';
 import { MathService } from '../../common';
+import { CountryCodes } from '../../country_codes';
 import { WsReader } from 'vizabi-ws-reader';
 
 interface Point {x: number, y:number};
@@ -173,7 +174,7 @@ export class StreetFamilyDrawService {
   };
 
   private _getCountryIncomeData(countryName: string): Promise<any> {
-    //TODO: fix query to work with actual country name (and not the country ISO code which Dollar Street doesn't know).
+    const countryCode = CountryCodes[countryName];
     return this.wsReader.read({
       "from": "datapoints",
       "select": {
@@ -190,7 +191,7 @@ export class StreetFamilyDrawService {
       "where": {
         "$and": [
           {
-            "country": { "$in": ["bdi"] }
+            "country": { "$in": [`${countryCode}`] }
           },
           {
             "time": "2015"
