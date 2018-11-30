@@ -11,17 +11,17 @@
   vertical-align: top;
 }
 
-svg path.america {
-  fill: #11ee11;
+svg path.americas {
+  fill: #7feb00;
 }
 svg path.africa {
-  fill: #11eeee;
+  fill: #00d5e9;
 }
 svg path.asia {
-  fill: #ee1111;
+  fill: #ff5872;
 }
 svg path.europe {
-  fill: #1111ee;
+  fill: #ffe700;
 }
 
 @media (max-width: 1023px) {
