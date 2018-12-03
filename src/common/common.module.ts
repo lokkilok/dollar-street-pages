@@ -16,6 +16,7 @@ import { UtilsService } from './utils/utils.service';
 import { ImageGeneratorService } from './image-generator/image-generator.service';
 import { SortPlacesService } from './sort-places/sort-places.service';
 import { IncomeCalcService } from './income-calc/income-calc.service';
+import { IncomeMountain } from './income-mountain/income-mountain';
 
 @NgModule({
   imports: [],
@@ -35,7 +36,8 @@ import { IncomeCalcService } from './income-calc/income-calc.service';
     UtilsService,
     ImageGeneratorService,
     SortPlacesService,
-    IncomeCalcService
+    IncomeCalcService,
+    IncomeMountain
   ]
 })
 export class CommonAppModule {

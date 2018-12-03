@@ -7,7 +7,7 @@ import { SVG_DEFAULTS } from '../street/svg-parameters';
 import { Place } from '../../interfaces';
 import { get } from 'lodash';
 import { DefaultUrlParameters } from '../../defaultState';
-import { MathService } from '../../common';
+import { IncomeMountain } from '../../common';
 import { CountryCodes } from '../../country_codes';
 import { WsReader } from 'vizabi-ws-reader';
 
@@ -33,14 +33,13 @@ export class StreetFamilyDrawService {
   public device: BrowserDetectionService;
   public isDesktop: boolean;
   public isMobile: boolean;
-  public math: MathService;
+  public incomeMountain: IncomeMountain;
   private wsReader; //TODO: the waffle service reader could be wrapped in a dedicated ng service
   private mu: number; //TODO: pass this somehow as part of the D3 data 
   private sigma: number; //TODO: pass this somehow as part of the D3 data
 
-  public constructor(browserDetectionService: BrowserDetectionService, math: MathService) {
+  public constructor(browserDetectionService: BrowserDetectionService) {
     this.device = browserDetectionService;
-    this.math = math;
     this.isDesktop = this.device.isDesktop();
     this.isMobile = this.device.isMobile();
   }
@@ -70,13 +69,15 @@ export class StreetFamilyDrawService {
       ])
       .range([this.sidewalkLeft.x, this.sidewalkRight.x - this.sidewalkLeft.x]);
     this.yScale = scaleLinear().domain([0, 1]).range([this.roadGroundLevel - 4, 0]);
-    this.area = area <number> ()
+    this.area = area <any> ()
       .curve(curveBasis)
-      .x(income => _this.xScale(income))
-      .y0(income => _this.yScale(0))
-      .y1(income => _this.yScale(_this.math.lognormal(income, _this.sigma, _this.mu)));
+      .x(pdfPoint => _this.xScale(pdfPoint.x))
+      .y0(pdfPoint => _this.yScale(0))
+      .y1(pdfPoint => _this.yScale(pdfPoint.y));
 
-    //Prepare the waffle service reader
+    //Prepare the waffle service reader, we need this to get gdp and gini for a selected country
+    //TODO: enhance the DS service to provide that info to this application 
+    //      together with the other country data. 
     this.wsReader = WsReader.getReader();
     this.wsReader.init({
         "reader": "waffle",
@@ -209,24 +210,23 @@ export class StreetFamilyDrawService {
     //TODO: use Angular storage
     let countryIncomeData:any = sessionStorage.getItem(place.country.originName);
     if (countryIncomeData) countryIncomeData = JSON.parse(countryIncomeData);
-    if (countryIncomeData && countryIncomeData.sigma && countryIncomeData.mu) {
-     this.sigma = countryIncomeData.sigma;
-     this.mu = countryIncomeData.mu;
-     return this._drawIncomePDF(place.country.region);
+    if (countryIncomeData && countryIncomeData.gini && countryIncomeData.income_per_person_gdppercapita_ppp_inflation_adjusted) {
+      return this._drawIncomePDF(
+          countryIncomeData.income_per_person_gdppercapita_ppp_inflation_adjusted,
+          countryIncomeData.gapminder_gini,
+          place.country.region);
     }
              
-    //get GDP and gini, convert to mu and sigma, save and then draw
+    //get GDP and gini, save, and then draw
     this._getCountryIncomeData(place.country.originName)
     .then(result => {
       if (result && result.length > 0) {
         countryIncomeData = result[0];
-        const incomeFamilySize:number = 3.1; //TODO: get this from the Waffle server if possible?
-        countryIncomeData.sigma = this.math.giniToSigma(countryIncomeData.gapminder_gini);
-        countryIncomeData.mu = this.math.gdpToMu(countryIncomeData.income_per_person_gdppercapita_ppp_inflation_adjusted * incomeFamilySize, countryIncomeData.sigma);
         sessionStorage.setItem(place.country.originName, JSON.stringify(countryIncomeData));
-        this.sigma = countryIncomeData.sigma;
-        this.mu = countryIncomeData.mu;
-        return this._drawIncomePDF(place.country.region);
+        return this._drawIncomePDF(
+            countryIncomeData.income_per_person_gdppercapita_ppp_inflation_adjusted,
+            countryIncomeData.gapminder_gini,
+            place.country.region);
       }
         
       return this;
@@ -235,8 +235,9 @@ export class StreetFamilyDrawService {
     return this;
   };
  
-  private _drawIncomePDF(region: string): this {
-    let incomePoints = this.scale.ticks(10);
+  private _drawIncomePDF(gdp: number, gini: number, region: string): this {
+    let incomeMountain:IncomeMountain = new IncomeMountain(gdp, gini);
+    let incomePoints = incomeMountain.pdf(this.scale.ticks(30));
     this.svg
       .selectAll('path.mountain')
       .data([incomePoints])

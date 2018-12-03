@@ -19,7 +19,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {
-  MathService
+  IncomeMountain
 } from '../../common';
 import { GetStreetSettings } from '../../common/street-settings/ngrx/street-settings.actions';
 import { StreetFamilyDrawService } from './street-family.service';
@@ -52,7 +52,6 @@ export class StreetFamilyComponent implements OnDestroy, AfterViewInit {
 
   public constructor(elementRef: ElementRef,
                      streetDrawService: StreetFamilyDrawService,
-                     private math: MathService,
                      private store: Store<AppStates>) {
     this.element = elementRef.nativeElement;
     this.street = streetDrawService;
