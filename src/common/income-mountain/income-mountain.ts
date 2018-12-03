@@ -36,7 +36,7 @@ export class IncomeMountain {
     let lognormalPDF:Array<any> = [];
     X.forEach((x, i) => {
       lognormalPDF[i] = this.lognormal(x);
-      lowIncomeMask[i] = x < tailCutX ? 1 : (x > tailFade * 7 * 30 ? 0 : Math.exp((tailCutX - x) / tailFade));
+      lowIncomeMask[i] = x < tailCutX ? 1 : (x > tailFade * 7 ? 0 : Math.exp((tailCutX - x) / tailFade));
       lowIncomeAdjustments[i] = x > tailCutX && x < tailFatX ? 1 + Math.cos(Math.log(x) * k + m) : 0;
       lowIncomeArea += lowIncomeAdjustments[i];
       unadjustedArea += lowIncomeMask[i] * lognormalPDF[i];
