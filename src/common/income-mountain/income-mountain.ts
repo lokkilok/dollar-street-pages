@@ -8,10 +8,12 @@ import { Injectable } from '@angular/core';
 export class IncomeMountain {
   private mu: number;
   private sigma: number;
+  private mode: any;
   
   constructor(gdpPerCapita: number, gini: number) {
     this.sigma = this.giniToSigma(gini);
     this.mu = this.gdpPerCapitaToMu(gdpPerCapita, this.sigma);
+    this.mode = this.computeMode();
   }
 
   public pdf(X: Array<number>): Array<any> {
@@ -34,6 +36,7 @@ export class IncomeMountain {
     let lowIncomeArea:number = 0;
     let unadjustedArea:number = 0;
     let lognormalPDF:Array<any> = [];
+    this.mode = this.computeMode();
     X.forEach((x, i) => {
       lognormalPDF[i] = this.lognormal(x);
       lowIncomeMask[i] = x < tailCutX ? 1 : (x > tailFade * 7 ? 0 : Math.exp((tailCutX - x) / tailFade));
@@ -42,10 +45,25 @@ export class IncomeMountain {
       unadjustedArea += lowIncomeMask[i] * lognormalPDF[i];
     });
     return X.map((x, i) => {
-      return {x: x, y: lognormalPDF[i] * (1 - lowIncomeMask[i]) + lowIncomeAdjustments[i] / lowIncomeArea * unadjustedArea};
+      let y = lognormalPDF[i] * (1 - lowIncomeMask[i]) + lowIncomeAdjustments[i] / lowIncomeArea * unadjustedArea;
+      if (y > this.mode.y) {
+        this.mode.y = y;
+        this.mode.x = x;
+      }
+      return {x: x, y: y};
     });
   }
     
+  private computeMode(): any {
+    //return an object with the x and y of the top of the probability distribution function
+    let modeX :number = Math.exp(this.mu - this.sigma * this.sigma);
+    return {x: modeX, y: this.lognormal(modeX)}; //NOTE: this does not take any low income adjustments into account!
+  }
+
+  public get maximum(): number {
+    return this.mode.y;
+  }
+
   protected gdpPerCapitaToMu(gdp: number, sigma: number): number {
     // converting gdp per capita and year into MU per month for lognormal distribution
     // see https://en.wikipedia.org/wiki/Log-normal_distribution

@@ -13,6 +13,13 @@ import { WsReader } from 'vizabi-ws-reader';
 
 interface Point {x: number, y:number};
 
+enum IncomeMountainScaling { // scaling of the income probability distribution function, this controls the value of the top ("mode") of the curve/mountain
+  Unit = "UNIT",            // standard statistics, i.e. the area is 1 unit. 
+  Mode = "MAX",             // according to the mode, i.e. the maximum value or the top of the mountain
+  Population = "POPULATION" // according to the size of the population of the country (region) for the income mountain 
+};
+const MaxPopulation = Math.log(1500); // (log of) the highest known population for a country in DS, in millions. (China in 2015 has 1397)  
+
 @Injectable()
 export class StreetFamilyDrawService {
   public width: number;
@@ -25,6 +32,7 @@ export class StreetFamilyDrawService {
   public scale: any; // for placing the dividers and house in the front
   private xScale: any; // for the income mountain on the sidewalk
   private yScale: any; // for the income mountain
+  private incomeMountainScaling: IncomeMountainScaling;
   public axisLabel: number[] = [];
   public svg: any;
   private area: any;
@@ -68,6 +76,8 @@ export class StreetFamilyDrawService {
         get(drawDividers, 'rich', Number(DefaultUrlParameters.highIncome))
       ])
       .range([this.sidewalkLeft.x, this.sidewalkRight.x - this.sidewalkLeft.x]);
+    
+    this.incomeMountainScaling = IncomeMountainScaling.Population; //TODO: this could be taken from settings, e.g. "DefaultUrlParameters")
     this.yScale = scaleLinear().domain([0, 1]).range([this.roadGroundLevel - 4, 0]);
     this.area = area <any> ()
       .curve(curveBasis)
@@ -214,6 +224,7 @@ export class StreetFamilyDrawService {
       return this._drawIncomePDF(
           countryIncomeData.income_per_person_gdppercapita_ppp_inflation_adjusted,
           countryIncomeData.gapminder_gini,
+          countryIncomeData.population_total,
           place.country.region);
     }
              
@@ -222,10 +233,12 @@ export class StreetFamilyDrawService {
     .then(result => {
       if (result && result.length > 0) {
         countryIncomeData = result[0];
+        countryIncomeData.population_total = Math.round(countryIncomeData.population_total / 1000000);
         sessionStorage.setItem(place.country.originName, JSON.stringify(countryIncomeData));
         return this._drawIncomePDF(
             countryIncomeData.income_per_person_gdppercapita_ppp_inflation_adjusted,
             countryIncomeData.gapminder_gini,
+            countryIncomeData.population_total,
             place.country.region);
       }
         
@@ -235,9 +248,16 @@ export class StreetFamilyDrawService {
     return this;
   };
  
-  private _drawIncomePDF(gdp: number, gini: number, region: string): this {
+  private _drawIncomePDF(gdp: number, gini: number, population = 1400, region: string): this {
     let incomeMountain:IncomeMountain = new IncomeMountain(gdp, gini);
-    let incomePoints = incomeMountain.pdf(this.scale.ticks(30));
+    let incomePoints = incomeMountain.pdf([26, ...this.scale.ticks(30)]); // when adding the low end we see that the scaling and adjustments may be incorrect.
+    let yDomainTop = 1;
+    if (this.incomeMountainScaling === IncomeMountainScaling.Mode) {
+      yDomainTop = incomeMountain.maximum;
+    } else if (this.incomeMountainScaling === IncomeMountainScaling.Population) {
+      yDomainTop = incomeMountain.maximum * (MaxPopulation / Math.log(population));
+    }
+    this.yScale.domain([0, yDomainTop]);
     this.svg
       .selectAll('path.mountain')
       .data([incomePoints])
