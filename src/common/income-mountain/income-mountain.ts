@@ -18,10 +18,32 @@ export class IncomeMountain {
     // compute the probability density function for this income mountain
     // and return an array with object that have an x and y property.
     // the input should be an array of ordered numbers on the X-axis.
-    let lognormalPDF:Array<any> = X.map(x => {
-      return {x: x, y: this.lognormal(x)};
+
+    // the low income end is adjusted as it cannot go to 0 and below
+    // essentially the are below a cut off point is added onto the income
+    // range between the absolute low cut off and an income above which no 
+    // adjustment is made.
+    const tailCutX = 0.2 * 30; // income per month (30 days) below which income mountain is adjusted down 
+    const tailFatX = 1.85 * 30; // income per month above which no adjustment is applied
+    const tailFade = 0.7;  // factor to smooth low income adjustment
+    const k = 2 * Math.PI / (Math.log(tailFatX) - Math.log(tailCutX));
+    const m = Math.PI - Math.log(tailFatX) * k;
+
+    let lowIncomeMask:Array<number> = [];
+    let lowIncomeAdjustments: Array<number> = [];
+    let lowIncomeArea:number = 0;
+    let unadjustedArea:number = 0;
+    let lognormalPDF:Array<any> = [];
+    X.forEach((x, i) => {
+      lognormalPDF[i] = this.lognormal(x);
+      lowIncomeMask[i] = x < tailCutX ? 1 : (x > tailFade * 7 * 30 ? 0 : Math.exp((tailCutX - x) / tailFade));
+      lowIncomeAdjustments[i] = x > tailCutX && x < tailFatX ? 1 + Math.cos(Math.log(x) * k + m) : 0;
+      lowIncomeArea += lowIncomeAdjustments[i];
+      unadjustedArea += lowIncomeMask[i] * lognormalPDF[i];
     });
-    return lognormalPDF;
+    return X.map((x, i) => {
+      return {x: x, y: lognormalPDF[i] * (1 - lowIncomeMask[i]) + lowIncomeAdjustments[i] / lowIncomeArea * unadjustedArea};
+    });
   }
     
   protected gdpPerCapitaToMu(gdp: number, sigma: number): number {
