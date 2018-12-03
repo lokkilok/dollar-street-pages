@@ -15,12 +15,12 @@ export class IncomeMountain {
   }
 
   public pdf(X: Array<number>): Array<any> {
-    // compute the probability density function for this income mountain
+    // Compute the probability density function for this income mountain
     // and return an array with object that have an x and y property.
-    // the input should be an array of ordered numbers on the X-axis.
+    // The input should be an array of ordered numbers on the X-axis.
 
-    // the low income end is adjusted as it cannot go to 0 and below
-    // essentially the are below a cut off point is added onto the income
+    // The low income end is adjusted as it cannot go to 0 and below.
+    // essentially the area below a cut off point is added onto the income
     // range between the absolute low cut off and an income above which no 
     // adjustment is made.
     const tailCutX = 0.2 * 30; // income per month (30 days) below which income mountain is adjusted down 
